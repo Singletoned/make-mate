@@ -88,6 +88,11 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
         return Ok(0);
     }
 
+    if options.version {
+        println!("mate {}", env!("CARGO_PKG_VERSION"));
+        return Ok(0);
+    }
+
     if let Some(shell) = options.shell_completion {
         print_shell_completion(&shell)?;
         return Ok(0);
@@ -125,6 +130,7 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
 #[derive(Debug, Default)]
 struct Options {
     help: bool,
+    version: bool,
     list: bool,
     makefile: Option<PathBuf>,
     shell_completion: Option<String>,
@@ -141,6 +147,7 @@ impl Options {
         while index < args.len() {
             match args[index].as_str() {
                 "-h" | "--help" => options.help = true,
+                "-V" | "--version" => options.version = true,
                 "-l" | "--list" => options.list = true,
                 "-f" | "--makefile" => {
                     index += 1;
@@ -196,7 +203,7 @@ impl Options {
 
 fn print_help() {
     println!(
-        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n    -h, --help                      Show this help\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
+        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n    -h, --help                      Show this help\n    -V, --version                   Show the installed mate version\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
     );
 }
 
@@ -543,6 +550,7 @@ fn cli_option_completions(words: &[String]) -> Option<Vec<String>> {
             ("--list", "list known targets"),
             ("--makefile", "use a specific Makefile"),
             ("--shell-completion", "print shell completion glue"),
+            ("--version", "show installed version"),
         ];
 
         if options.iter().any(|(option, _)| *option == current) {
@@ -664,11 +672,9 @@ mod tests {
 
         assert!(completions.iter().any(|item| item.starts_with("--list")));
         assert!(completions.iter().any(|item| item.starts_with("--help")));
-        assert!(
-            completions
-                .iter()
-                .any(|item| item.starts_with("--shell-completion"))
-        );
+        assert!(completions
+            .iter()
+            .any(|item| item.starts_with("--shell-completion")));
     }
 
     #[test]

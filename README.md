@@ -22,6 +22,7 @@ release: ## publish a release
 Then run:
 
 ```sh
+mate --version
 mate --list
 mate test
 mate release 1.2.3

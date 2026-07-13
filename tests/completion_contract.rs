@@ -69,6 +69,15 @@ fn completes_cli_options_without_a_makefile() {
     assert!(stdout.contains("--list\tlist known targets"));
     assert!(stdout.contains("--makefile\tuse a specific Makefile"));
     assert!(stdout.contains("--shell-completion\tprint shell completion glue"));
+    assert!(stdout.contains("--version\tshow installed version"));
+}
+
+#[test]
+fn prints_the_installed_version() {
+    let output = mate(&["--version"]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert_eq!(stdout(&output), "mate 0.1.4\n");
 }
 
 #[test]
