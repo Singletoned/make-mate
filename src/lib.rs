@@ -93,6 +93,13 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
         return Ok(0);
     }
 
+    if let Some(words) = &options.complete_words {
+        if let Some(completions) = cli_option_completions(words) {
+            print_lines(&completions);
+            return Ok(0);
+        }
+    }
+
     let makefile = options.makefile.map_or_else(find_makefile, Ok)?;
     let targets = load_targets(&makefile)?;
 
@@ -471,36 +478,93 @@ fn print_targets(targets: &BTreeMap<String, Target>) {
 }
 
 fn print_completions(targets: &BTreeMap<String, Target>, words: &[String]) {
-    let words: Vec<&str> = words
-        .iter()
-        .map(String::as_str)
-        .filter(|word| *word != "mate")
-        .collect();
+    print_lines(&completion_candidates(targets, words));
+}
+
+fn completion_candidates(targets: &BTreeMap<String, Target>, words: &[String]) -> Vec<String> {
+    if let Some(completions) = cli_option_completions(words) {
+        return completions;
+    }
+
+    let words = completion_words(words);
     let Some(target_word) = words.first() else {
-        print_targets(targets);
-        return;
+        return target_lines(targets);
     };
 
     if words.len() == 1 && !targets.contains_key(*target_word) {
-        for target in targets
+        return targets
             .values()
             .filter(|target| target.name.starts_with(target_word))
-        {
-            if let Some(description) = &target.description {
-                println!("{}\t{}", target.name, description);
-            } else {
-                println!("{}", target.name);
-            }
-        }
-        return;
+            .map(target_line)
+            .collect();
     }
 
     let Some(target) = targets.get(*target_word) else {
-        return;
+        return Vec::new();
     };
     let supplied = words.len().saturating_sub(1);
-    if let Some(argument) = target.arguments.get(supplied) {
-        println!("<{}>", argument.name);
+    target
+        .arguments
+        .get(supplied)
+        .map(|argument| vec![format!("<{}>", argument.name)])
+        .unwrap_or_default()
+}
+
+fn cli_option_completions(words: &[String]) -> Option<Vec<String>> {
+    let words = completion_words(words);
+    let current = words.last().copied().unwrap_or_default();
+
+    if matches!(words.first(), Some(&"--shell-completion")) {
+        return Some(
+            ["bash", "fish", "zsh"]
+                .into_iter()
+                .filter(|shell| shell.starts_with(current))
+                .map(str::to_string)
+                .collect(),
+        );
+    }
+
+    if current.starts_with('-') {
+        return Some(
+            [
+                "--help\tshow help",
+                "--list\tlist known targets",
+                "--makefile\tuse a specific Makefile",
+                "--shell-completion\tprint shell completion glue",
+            ]
+            .into_iter()
+            .filter(|option| option.starts_with(current))
+            .map(str::to_string)
+            .collect(),
+        );
+    }
+
+    None
+}
+
+fn completion_words(words: &[String]) -> Vec<&str> {
+    words
+        .iter()
+        .map(String::as_str)
+        .filter(|word| *word != "mate")
+        .collect()
+}
+
+fn target_lines(targets: &BTreeMap<String, Target>) -> Vec<String> {
+    targets.values().map(target_line).collect()
+}
+
+fn target_line(target: &Target) -> String {
+    if let Some(description) = &target.description {
+        format!("{}\t{}", target.name, description)
+    } else {
+        target.name.clone()
+    }
+}
+
+fn print_lines(lines: &[String]) {
+    for line in lines {
+        println!("{line}");
     }
 }
 
@@ -573,5 +637,24 @@ mod tests {
         assert!(!targets.contains(".PHONY"));
         assert!(!targets.contains("%.o"));
         assert!(!targets.contains("Makefile"));
+    }
+
+    #[test]
+    fn completes_long_options_without_makefile_metadata() {
+        let completions = cli_option_completions(&["--".to_string()]).unwrap();
+
+        assert!(completions.iter().any(|item| item.starts_with("--list")));
+        assert!(completions.iter().any(|item| item.starts_with("--help")));
+        assert!(completions
+            .iter()
+            .any(|item| item.starts_with("--shell-completion")));
+    }
+
+    #[test]
+    fn completes_shell_completion_values() {
+        let completions =
+            cli_option_completions(&["--shell-completion".to_string(), "z".to_string()]).unwrap();
+
+        assert_eq!(completions, vec!["zsh".to_string()]);
     }
 }
