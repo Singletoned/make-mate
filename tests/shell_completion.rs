@@ -96,6 +96,34 @@ printf '%s\n' "${{COMPREPLY[@]}}"
 }
 
 #[test]
+fn bash_stub_does_not_reinsert_exact_option() {
+    let stub = write_stub("bash");
+    let script = format!(
+        r#"source "{}"
+COMP_WORDS=(mate --help)
+COMP_CWORD=1
+_mate
+printf '%s\n' "${{COMPREPLY[@]}}"
+"#,
+        stub.display()
+    );
+
+    let output = Command::new("bash")
+        .arg("-c")
+        .arg(script)
+        .env("PATH", shell_path())
+        .output()
+        .expect("bash should run completion smoke test");
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stdout.trim().is_empty(),
+        "expected no completions, got {stdout:?}"
+    );
+}
+
+#[test]
 fn zsh_stub_inserts_option_without_description() {
     let stub = write_stub("zsh");
     let script = zsh_harness(&stub, "words=(mate --)");
@@ -110,9 +138,11 @@ fn zsh_stub_inserts_option_without_description() {
     let (stdout, stderr) = output_text(&output);
 
     assert!(output.status.success(), "stderr: {stderr}");
-    assert!(stdout
-        .lines()
-        .any(|line| line == "--list:list known targets"));
+    assert!(
+        stdout
+            .lines()
+            .any(|line| line == "--list:list known targets")
+    );
     assert!(
         !stdout.contains('\t'),
         "zsh candidates must use colon descriptions, not tabs: {stdout:?}"
@@ -136,6 +166,27 @@ fn zsh_stub_completes_target_prefix_without_description() {
 
     assert!(output.status.success(), "stderr: {stderr}");
     assert_eq!(stdout, "release:publish release\n");
+}
+
+#[test]
+fn zsh_stub_does_not_reinsert_exact_option() {
+    let stub = write_stub("zsh");
+    let script = zsh_harness(&stub, "words=(mate --help)");
+
+    let output = Command::new("zsh")
+        .arg("-f")
+        .arg("-c")
+        .arg(script)
+        .env("PATH", shell_path())
+        .output()
+        .expect("zsh should be installed for completion smoke tests");
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stdout.trim().is_empty(),
+        "expected no completions, got {stdout:?}"
+    );
 }
 
 fn zsh_harness(stub: &Path, words_assignment: &str) -> String {

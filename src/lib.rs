@@ -531,24 +531,30 @@ fn cli_option_completions(words: &[String]) -> Option<Vec<String>> {
         return Some(
             ["bash", "fish", "zsh"]
                 .into_iter()
-                .filter(|shell| shell.starts_with(current))
+                .filter(|shell| shell.starts_with(current) && *shell != current)
                 .map(str::to_string)
                 .collect(),
         );
     }
 
     if current.starts_with('-') {
+        let options = [
+            ("--help", "show help"),
+            ("--list", "list known targets"),
+            ("--makefile", "use a specific Makefile"),
+            ("--shell-completion", "print shell completion glue"),
+        ];
+
+        if options.iter().any(|(option, _)| *option == current) {
+            return Some(Vec::new());
+        }
+
         return Some(
-            [
-                "--help\tshow help",
-                "--list\tlist known targets",
-                "--makefile\tuse a specific Makefile",
-                "--shell-completion\tprint shell completion glue",
-            ]
-            .into_iter()
-            .filter(|option| option.starts_with(current))
-            .map(str::to_string)
-            .collect(),
+            options
+                .into_iter()
+                .filter(|(option, _)| option.starts_with(current))
+                .map(|(option, description)| format!("{option}\t{description}"))
+                .collect(),
         );
     }
 
@@ -658,9 +664,11 @@ mod tests {
 
         assert!(completions.iter().any(|item| item.starts_with("--list")));
         assert!(completions.iter().any(|item| item.starts_with("--help")));
-        assert!(completions
-            .iter()
-            .any(|item| item.starts_with("--shell-completion")));
+        assert!(
+            completions
+                .iter()
+                .any(|item| item.starts_with("--shell-completion"))
+        );
     }
 
     #[test]
@@ -669,5 +677,20 @@ mod tests {
             cli_option_completions(&["--shell-completion".to_string(), "z".to_string()]).unwrap();
 
         assert_eq!(completions, vec!["zsh".to_string()]);
+    }
+
+    #[test]
+    fn does_not_recomplete_exact_options() {
+        let completions = cli_option_completions(&["--help".to_string()]).unwrap();
+
+        assert!(completions.is_empty());
+    }
+
+    #[test]
+    fn does_not_recomplete_exact_shell_completion_values() {
+        let completions =
+            cli_option_completions(&["--shell-completion".to_string(), "zsh".to_string()]).unwrap();
+
+        assert!(completions.is_empty());
     }
 }
