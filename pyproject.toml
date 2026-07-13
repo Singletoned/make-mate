@@ -1,0 +1,27 @@
+[build-system]
+requires = ["maturin>=1.14,<2"]
+build-backend = "maturin"
+
+[project]
+name = "make-mate"
+version = "0.1.0"
+description = "An easier make wrapper for task-style Makefiles"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "make-mate contributors" }]
+keywords = ["make", "cli", "task-runner", "completion"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Programming Language :: Rust",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: System :: Shells",
+]
+
+[project.urls]
+Homepage = "https://github.com/singletoned/make-mate"
+
+[tool.maturin]
+bindings = "bin"
+strip = true
