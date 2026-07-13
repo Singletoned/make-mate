@@ -40,6 +40,7 @@ The equivalent plain-`make` command remains valid.
 
 ```sh
 cargo test
+make test-shells
 cargo run -- --help
 maturin build
 ```

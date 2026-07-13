@@ -1,7 +1,10 @@
-.PHONY: test check fmt build package
+.PHONY: test test-shells check fmt build package
 
 test: ## run Rust tests
 	cargo test
+
+test-shells: ## run shell completion smoke tests
+	cargo test --test shell_completion
 
 check: ## run Rust checks
 	cargo check

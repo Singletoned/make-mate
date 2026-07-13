@@ -514,7 +514,10 @@ fn completion_candidates(targets: &BTreeMap<String, Target>, words: &[String]) -
     let Some(target) = targets.get(*target_word) else {
         return Vec::new();
     };
-    let supplied = words.len().saturating_sub(1);
+    let supplied = words
+        .len()
+        .saturating_sub(1)
+        .saturating_sub(usize::from(words.last() == Some(&"")));
     target
         .arguments
         .get(supplied)
