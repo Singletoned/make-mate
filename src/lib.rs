@@ -264,11 +264,8 @@ fn find_makefile() -> Result<PathBuf, MateError> {
 pub fn load_targets(makefile: &Path) -> Result<BTreeMap<String, Target>, MateError> {
     let metadata = parse_makefile_metadata(makefile)?;
     let discovered = discover_make_targets(makefile);
-    let target_names = if discovered.is_empty() {
-        metadata.keys().cloned().collect()
-    } else {
-        discovered
-    };
+    let mut target_names = discovered;
+    target_names.extend(metadata.keys().cloned());
 
     let mut targets = BTreeMap::new();
     for name in target_names {
@@ -331,7 +328,10 @@ pub fn parse_metadata(content: &str) -> BTreeMap<String, Target> {
             .map(|(_, description)| description.trim().to_string())
             .filter(|description| !description.is_empty());
 
-        for name in target_part.split_whitespace() {
+        for name in target_part
+            .split_whitespace()
+            .filter(|name| should_include_target(name))
+        {
             targets.insert(
                 name.to_string(),
                 Target {
@@ -389,7 +389,8 @@ fn discover_make_targets(makefile: &Path) -> BTreeSet<String> {
 }
 
 pub fn parse_make_database_targets(database: &str) -> BTreeSet<String> {
-    let mut targets = BTreeSet::new();
+    let mut explicit_targets = BTreeSet::new();
+    let mut phony_targets = BTreeSet::new();
     let mut in_files_section = false;
 
     for line in database.lines() {
@@ -404,21 +405,41 @@ pub fn parse_make_database_targets(database: &str) -> BTreeSet<String> {
             continue;
         }
 
-        let Some((target_part, _)) = line.split_once(':') else {
+        let Some((target_part, rest)) = line.split_once(':') else {
             continue;
         };
-        if target_part.contains('=') || target_part.contains('%') || target_part.trim().is_empty() {
+        let target_part = target_part.trim();
+
+        if target_part == ".PHONY" {
+            phony_targets.extend(parse_phony_prerequisites(rest));
+            continue;
+        }
+
+        if target_part.contains('=') || target_part.contains('%') || target_part.is_empty() {
             continue;
         }
 
         for target in target_part.split_whitespace() {
             if should_include_target(target) {
-                targets.insert(target.to_string());
+                explicit_targets.insert(target.to_string());
             }
         }
     }
 
-    targets
+    if phony_targets.is_empty() {
+        explicit_targets
+    } else {
+        phony_targets
+    }
+}
+
+fn parse_phony_prerequisites(rest: &str) -> impl Iterator<Item = String> + '_ {
+    rest.split('#')
+        .next()
+        .into_iter()
+        .flat_map(str::split_whitespace)
+        .filter(|target| should_include_target(target))
+        .map(str::to_string)
 }
 
 fn should_include_target(target: &str) -> bool {
@@ -667,14 +688,36 @@ mod tests {
     }
 
     #[test]
+    fn prefers_phony_targets_when_present() {
+        let targets = parse_make_database_targets(
+            "# Files\n.PHONY: test release\nbuild/output.txt:\nrelease:\ntest:\n# Finished Make data base\n",
+        );
+
+        assert!(targets.contains("release"));
+        assert!(targets.contains("test"));
+        assert!(!targets.contains("build/output.txt"));
+    }
+
+    #[test]
+    fn falls_back_to_explicit_targets_without_phony_entries() {
+        let targets =
+            parse_make_database_targets("# Files\nbuild:\nrelease:\n# Finished Make data base\n");
+
+        assert!(targets.contains("build"));
+        assert!(targets.contains("release"));
+    }
+
+    #[test]
     fn completes_long_options_without_makefile_metadata() {
         let completions = cli_option_completions(&["--".to_string()]).unwrap();
 
         assert!(completions.iter().any(|item| item.starts_with("--list")));
         assert!(completions.iter().any(|item| item.starts_with("--help")));
-        assert!(completions
-            .iter()
-            .any(|item| item.starts_with("--shell-completion")));
+        assert!(
+            completions
+                .iter()
+                .any(|item| item.starts_with("--shell-completion"))
+        );
     }
 
     #[test]

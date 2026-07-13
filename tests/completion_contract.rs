@@ -2,6 +2,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 const BASIC_FIXTURE: &str = "tests/fixtures/basic/Makefile";
+const PHONY_FILTER_FIXTURE: &str = "tests/fixtures/phony-filter/Makefile";
 
 fn mate(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_mate"))
@@ -47,6 +48,17 @@ fn filters_target_prefixes() {
 }
 
 #[test]
+fn prefers_phony_targets_over_file_targets() {
+    let output = mate(&["-f", PHONY_FILTER_FIXTURE, "--complete", "--", ""]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let stdout = stdout(&output);
+    assert!(stdout.contains("release\tpublish release"));
+    assert!(stdout.contains("test\trun tests"));
+    assert!(!stdout.contains("build/output.txt"));
+}
+
+#[test]
 fn completes_declared_argument_placeholders() {
     let output = mate(&["-f", BASIC_FIXTURE, "--complete", "--", "release", ""]);
 
@@ -77,7 +89,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.4\n");
+    assert_eq!(stdout(&output), "mate 0.1.5\n");
 }
 
 #[test]

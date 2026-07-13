@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "make-mate"
-version = "0.1.4"
+version = "0.1.5"
 description = "An easier make wrapper for task-style Makefiles"
 readme = "README.md"
 requires-python = ">=3.9"
