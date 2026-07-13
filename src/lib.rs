@@ -203,23 +203,35 @@ fn print_help() {
 fn print_shell_completion(shell: &str) -> Result<(), MateError> {
     match shell {
         "bash" => println!(
+            "{}",
             r#"_mate()
-{{
+{
     local IFS=$'\n'
-    COMPREPLY=( $(mate --complete -- "${{COMP_WORDS[@]:1}}") )
-}}
+    COMPREPLY=( $(mate --complete -- "${COMP_WORDS[@]:1}" | cut -f1) )
+}
 complete -F _mate mate"#
         ),
         "zsh" => println!(
+            "{}",
             r#"#compdef mate
-_mate() {{
-    local -a candidates
-    candidates=(${{(f)"$(mate --complete -- ${{words[2,-1]}})"}})
-    _describe 'mate target' candidates
-}}
+_mate() {
+    local -a lines values descriptions
+    lines=(${(f)"$(mate --complete -- ${words[2,-1]})"})
+    for line in $lines; do
+        if [[ "$line" == *$'\t'* ]]; then
+            values+=("${line%%$'\t'*}")
+            descriptions+=("${line#*$'\t'}")
+        else
+            values+=("$line")
+            descriptions+=("")
+        fi
+    done
+    compadd -d descriptions -- $values
+}
 compdef _mate mate"#
         ),
         "fish" => println!(
+            "{}",
             r#"function __mate_complete
     mate --complete -- (commandline -opc)[2..-1]
 end
