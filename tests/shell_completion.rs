@@ -110,10 +110,12 @@ fn zsh_stub_inserts_option_without_description() {
     let (stdout, stderr) = output_text(&output);
 
     assert!(output.status.success(), "stderr: {stderr}");
-    assert!(stdout.lines().any(|line| line == "--list"));
+    assert!(stdout
+        .lines()
+        .any(|line| line == "--list:list known targets"));
     assert!(
         !stdout.contains('\t'),
-        "inserted values must not contain descriptions: {stdout:?}"
+        "zsh candidates must use colon descriptions, not tabs: {stdout:?}"
     );
 }
 
@@ -133,23 +135,15 @@ fn zsh_stub_completes_target_prefix_without_description() {
     let (stdout, stderr) = output_text(&output);
 
     assert!(output.status.success(), "stderr: {stderr}");
-    assert_eq!(stdout, "release\n");
+    assert_eq!(stdout, "release:publish release\n");
 }
 
 fn zsh_harness(stub: &Path, words_assignment: &str) -> String {
     format!(
         r#"compdef() {{ :; }}
-compadd() {{
-    local after_separator=0
-    local arg
-    for arg in "$@"; do
-        if [[ "$after_separator" = 1 ]]; then
-            print -r -- "$arg"
-        fi
-        if [[ "$arg" = "--" ]]; then
-            after_separator=1
-        fi
-    done
+_describe() {{
+    local candidate_array_name="${{@[-1]}}"
+    eval "print -rl -- \"\${{${{candidate_array_name}}[@]}}\""
 }}
 source "{}"
 {}

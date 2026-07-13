@@ -215,18 +215,16 @@ complete -F _mate mate"#
             "{}",
             r#"#compdef mate
 _mate() {
-    local -a lines values descriptions
+    local -a lines candidates
     lines=(${(f)"$(mate --complete -- ${words[2,-1]})"})
     for line in $lines; do
         if [[ "$line" == *$'\t'* ]]; then
-            values+=("${line%%$'\t'*}")
-            descriptions+=("${line#*$'\t'}")
+            candidates+=("${line%%$'\t'*}:${line#*$'\t'}")
         else
-            values+=("$line")
-            descriptions+=("")
+            candidates+=("$line")
         fi
     done
-    compadd -d descriptions -- $values
+    _describe -t mate-completions 'mate completions' candidates
 }
 compdef _mate mate"#
         ),
