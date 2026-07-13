@@ -89,7 +89,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.5\n");
+    assert_eq!(stdout(&output), "mate 0.1.6\n");
 }
 
 #[test]

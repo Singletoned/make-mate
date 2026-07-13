@@ -6,6 +6,8 @@ It is aimed at Makefiles that are mostly `.PHONY` entries and keeps the Makefile
 
 ## Current conventions
 
+See [`docs/conventions.md`](docs/conventions.md) for the full Makefile convention and [`docs/completion.md`](docs/completion.md) for shell setup.
+
 Describe targets with the common `##` convention:
 
 ```make
@@ -39,9 +41,21 @@ The equivalent plain-`make` command remains valid.
 
 ## Development
 
+Useful recipes:
+
+```sh
+make help
+make test
+make test-shells
+make smoke
+make install-dev
+make package
+```
+
+Or run commands directly:
+
 ```sh
 cargo test
-make test-shells
 cargo run -- --help
 maturin build
 ```
