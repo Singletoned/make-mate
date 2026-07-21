@@ -633,11 +633,35 @@ fn make_variable_name(argument: &str) -> String {
 
 fn print_targets(targets: &BTreeMap<String, Target>) {
     for target in targets.values() {
-        if let Some(description) = &target.description {
-            println!("{}\t{}", target.name, description);
-        } else {
-            println!("{}", target.name);
-        }
+        println!("{}", list_target_line(target));
+    }
+}
+
+fn list_target_line(target: &Target) -> String {
+    let command = target_command_signature(target);
+    if let Some(description) = &target.description {
+        format!("{command}\t{description}")
+    } else {
+        command
+    }
+}
+
+fn target_command_signature(target: &Target) -> String {
+    let mut signature = target.name.clone();
+    for argument in &target.arguments {
+        signature.push(' ');
+        signature.push_str(&argument_signature(argument));
+    }
+    signature
+}
+
+fn argument_signature(argument: &Argument) -> String {
+    if let Some(default) = &argument.default {
+        format!("[{}={default}]", argument.name)
+    } else if argument.required {
+        format!("<{}>", argument.name)
+    } else {
+        format!("[{}]", argument.name)
     }
 }
 

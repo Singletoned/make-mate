@@ -32,6 +32,12 @@ test: ## run tests
 
 `mate --list` and shell completion display these descriptions.
 
+When a target declares arguments, `mate --list` shows them next to the target name:
+
+```text
+release <version> [target=all]    publish a release
+```
+
 ## Arguments
 
 Declare positional arguments in a comment immediately before the target:

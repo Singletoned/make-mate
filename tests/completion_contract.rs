@@ -49,6 +49,18 @@ fn filters_target_prefixes() {
 }
 
 #[test]
+fn lists_declared_arguments_next_to_targets() {
+    let output = mate(&["-f", BASIC_FIXTURE, "--list"]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let stdout = stdout(&output);
+    assert!(stdout.contains("build\tbuild project"));
+    assert!(stdout.contains("new <title>\tcreate new post"));
+    assert!(stdout.contains("release <version> [target=all]\tpublish release"));
+    assert!(stdout.contains("test\trun tests"));
+}
+
+#[test]
 fn prefers_phony_targets_over_file_targets() {
     let output = mate(&["-f", PHONY_FILTER_FIXTURE, "--complete", "--", ""]);
 
@@ -116,7 +128,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.9\n");
+    assert_eq!(stdout(&output), "mate 0.1.10\n");
 }
 
 #[test]
