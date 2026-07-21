@@ -93,6 +93,16 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
         return Ok(0);
     }
 
+    if options.makefile_syntax {
+        print_makefile_syntax();
+        return Ok(0);
+    }
+
+    if options.llm_guidance {
+        print_llm_guidance();
+        return Ok(0);
+    }
+
     if let Some(shell) = options.shell_completion {
         print_shell_completion(&shell)?;
         return Ok(0);
@@ -131,6 +141,8 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
 struct Options {
     help: bool,
     version: bool,
+    makefile_syntax: bool,
+    llm_guidance: bool,
     list: bool,
     makefile: Option<PathBuf>,
     shell_completion: Option<String>,
@@ -148,6 +160,8 @@ impl Options {
             match args[index].as_str() {
                 "-h" | "--help" => options.help = true,
                 "-V" | "--version" => options.version = true,
+                "--makefile-syntax" => options.makefile_syntax = true,
+                "--llm-guidance" => options.llm_guidance = true,
                 "-l" | "--list" => options.list = true,
                 "-f" | "--makefile" => {
                     index += 1;
@@ -203,7 +217,100 @@ impl Options {
 
 fn print_help() {
     println!(
-        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n    -h, --help                      Show this help\n    -V, --version                   Show the installed mate version\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
+        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n        --makefile-syntax           Explain Makefile metadata conventions\n        --llm-guidance              Print guidance for coding agents and LLMs\n    -h, --help                      Show this help\n    -V, --version                   Show the installed mate version\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
+    );
+}
+
+fn print_makefile_syntax() {
+    println!(
+        r#"# mate Makefile syntax
+
+Use ordinary Makefiles. Keep every recipe valid under plain make.
+
+## Task targets
+
+Declare human-facing tasks as .PHONY targets:
+
+    .PHONY: test release
+
+    test: ## run tests
+    	cargo test
+
+mate prefers .PHONY targets for listing and completion when they are present.
+
+## Descriptions
+
+Put a description after ## on the target line:
+
+    test: ## run tests
+
+Descriptions appear in `mate --list` and shell completion.
+
+## Positional arguments
+
+Put `# args:` immediately before the target:
+
+    # args: version target?=all
+    release: ## publish a release
+    	./scripts/release.sh $(VERSION) $(TARGET)
+
+Then run:
+
+    mate release 1.2.3
+
+mate invokes plain make with variables:
+
+    make release VERSION=1.2.3 TARGET=all
+
+Argument syntax:
+
+    name            required positional argument
+    name?           optional positional argument
+    name?=default   optional positional argument with a default
+
+Argument names become make variables by replacing '-' with '_' and uppercasing.
+For example, `target-env` becomes `$(TARGET_ENV)`."#
+    );
+}
+
+fn print_llm_guidance() {
+    println!(
+        r#"# mate guidance for coding agents and LLMs
+
+mate is an easier make wrapper. Generate Makefiles that still work with plain make.
+
+## Authoring rules
+
+- Prefer simple .PHONY task targets for human-facing commands.
+- Add `target: ## short description` for every public task.
+- Put `# args:` directly above a target when positional arguments are useful.
+- Use ordinary make variables in recipes: $(VERSION), $(TARGET), $(ENV), etc.
+- Do not add catch-all targets, positional-target hacks, or shell-only metadata.
+- Keep targets deterministic and safe to inspect; avoid side effects during make parsing.
+
+## Good target style
+
+    .PHONY: test release
+
+    test: ## run tests
+    	cargo test
+
+    # args: version target?=all
+    release: ## publish a release
+    	./scripts/release.sh $(VERSION) $(TARGET)
+
+## Use mate efficiently
+
+- Use `mate --list` to discover available tasks with descriptions.
+- Use `mate --complete -- <words>` for machine-readable completion candidates.
+- Use `mate --makefile-syntax` when you need the supported metadata syntax.
+- Use `mate --version` when verifying an installed development build.
+- Invoke tasks as `mate target arg1 arg2`; mate converts positional args into make variables.
+
+## Compatibility principle
+
+Every mate-enhanced Makefile should remain understandable and runnable as plain make.
+If a feature would require breaking make compatibility, do not use it."#
     );
 }
 
@@ -570,6 +677,11 @@ fn cli_option_completions(words: &[String]) -> Option<Vec<String>> {
             ("--help", "show help"),
             ("--list", "list known targets"),
             ("--makefile", "use a specific Makefile"),
+            ("--makefile-syntax", "explain Makefile metadata conventions"),
+            (
+                "--llm-guidance",
+                "print guidance for coding agents and LLMs",
+            ),
             ("--shell-completion", "print shell completion glue"),
             ("--version", "show installed version"),
         ];
@@ -713,11 +825,9 @@ mod tests {
 
         assert!(completions.iter().any(|item| item.starts_with("--list")));
         assert!(completions.iter().any(|item| item.starts_with("--help")));
-        assert!(
-            completions
-                .iter()
-                .any(|item| item.starts_with("--shell-completion"))
-        );
+        assert!(completions
+            .iter()
+            .any(|item| item.starts_with("--shell-completion")));
     }
 
     #[test]

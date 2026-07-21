@@ -80,8 +80,32 @@ fn completes_cli_options_without_a_makefile() {
     assert!(stdout.contains("--help\tshow help"));
     assert!(stdout.contains("--list\tlist known targets"));
     assert!(stdout.contains("--makefile\tuse a specific Makefile"));
+    assert!(stdout.contains("--makefile-syntax\texplain Makefile metadata conventions"));
+    assert!(stdout.contains("--llm-guidance\tprint guidance for coding agents and LLMs"));
     assert!(stdout.contains("--shell-completion\tprint shell completion glue"));
     assert!(stdout.contains("--version\tshow installed version"));
+}
+
+#[test]
+fn prints_makefile_syntax_guidance() {
+    let output = mate(&["--makefile-syntax"]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let stdout = stdout(&output);
+    assert!(stdout.contains("# mate Makefile syntax"));
+    assert!(stdout.contains("# args: version target?=all"));
+    assert!(stdout.contains("make release VERSION=1.2.3 TARGET=all"));
+}
+
+#[test]
+fn prints_llm_guidance() {
+    let output = mate(&["--llm-guidance"]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    let stdout = stdout(&output);
+    assert!(stdout.contains("# mate guidance for coding agents and LLMs"));
+    assert!(stdout.contains("Use `mate --list`"));
+    assert!(stdout.contains("plain make"));
 }
 
 #[test]
@@ -89,7 +113,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.6\n");
+    assert_eq!(stdout(&output), "mate 0.1.7\n");
 }
 
 #[test]

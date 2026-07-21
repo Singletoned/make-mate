@@ -29,6 +29,8 @@ mate --list
 mate test
 mate release 1.2.3
 mate --shell-completion zsh
+mate --makefile-syntax
+mate --llm-guidance
 ```
 
 `mate release 1.2.3` invokes plain make as:
@@ -99,6 +101,7 @@ make test
 make test-shells
 make smoke
 make install-dev
+make completion
 make package
 ```
 
@@ -107,5 +110,7 @@ Or run commands directly:
 ```sh
 cargo test
 cargo run -- --help
+cargo run -- --makefile-syntax
+cargo run -- --llm-guidance
 maturin build
 ```

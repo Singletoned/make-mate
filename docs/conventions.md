@@ -2,6 +2,12 @@
 
 `make-mate` is intentionally a small layer over plain `make`. A Makefile written for `mate` should still be useful when someone runs `make` directly.
 
+Print the short built-in reference with:
+
+```sh
+mate --makefile-syntax
+```
+
 ## Task targets
 
 Declare human-facing tasks as `.PHONY` targets:

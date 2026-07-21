@@ -1,6 +1,6 @@
 COMPLETION_SHELL ?= zsh
 
-.PHONY: help test test-contract test-shells check fmt taidy build package install-dev version list smoke smoke-completion smoke-args completion clean
+.PHONY: help test test-contract test-shells check fmt taidy build package install-dev version list syntax llm-guidance smoke smoke-completion smoke-args completion clean
 
 help: ## list available recipes
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "%-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -37,6 +37,12 @@ version: ## print the dev binary version
 
 list: ## list targets from this Makefile with the dev binary
 	cargo run --quiet --bin mate -- --list
+
+syntax: ## print Makefile syntax guidance with the dev binary
+	cargo run --quiet --bin mate -- --makefile-syntax
+
+llm-guidance: ## print coding-agent guidance with the dev binary
+	cargo run --quiet --bin mate -- --llm-guidance
 
 smoke: version list smoke-completion smoke-args ## run quick local smoke checks
 
