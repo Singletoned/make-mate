@@ -8,6 +8,7 @@ use std::process::{Command, Stdio};
 const MAKEFILES: &[&str] = &["GNUmakefile", "makefile", "Makefile"];
 const ARG_DIRECTIVE: &str = "args:";
 const DESCRIPTION_MARKER: &str = "##";
+const LIST_DESCRIPTION_GAP: usize = 2;
 
 #[derive(Debug)]
 pub enum MateError {
@@ -632,18 +633,37 @@ fn make_variable_name(argument: &str) -> String {
 }
 
 fn print_targets(targets: &BTreeMap<String, Target>) {
-    for target in targets.values() {
-        println!("{}", list_target_line(target));
+    for line in list_target_lines(targets) {
+        println!("{line}");
     }
 }
 
-fn list_target_line(target: &Target) -> String {
-    let command = target_command_signature(target);
-    if let Some(description) = &target.description {
-        format!("{command}\t{description}")
-    } else {
-        command
-    }
+fn list_target_lines(targets: &BTreeMap<String, Target>) -> Vec<String> {
+    let rows = targets
+        .values()
+        .map(|target| {
+            (
+                target_command_signature(target),
+                target.description.as_deref(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let command_width = rows
+        .iter()
+        .filter(|(_, description)| description.is_some())
+        .map(|(command, _)| command.len())
+        .max()
+        .unwrap_or_default();
+
+    rows.into_iter()
+        .map(|(command, description)| match description {
+            Some(description) => format!(
+                "{command:<width$}{description}",
+                width = command_width + LIST_DESCRIPTION_GAP
+            ),
+            None => command,
+        })
+        .collect()
 }
 
 fn target_command_signature(target: &Target) -> String {

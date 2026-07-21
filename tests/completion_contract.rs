@@ -54,10 +54,21 @@ fn lists_declared_arguments_next_to_targets() {
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let stdout = stdout(&output);
-    assert!(stdout.contains("build\tbuild project"));
-    assert!(stdout.contains("new <title>\tcreate new post"));
-    assert!(stdout.contains("release <version> [target=all]\tpublish release"));
-    assert!(stdout.contains("test\trun tests"));
+    assert!(stdout.contains("build"));
+    assert!(stdout.contains("new <title>"));
+    assert!(stdout.contains("release <version> [target=all]  publish release"));
+    assert!(stdout.contains("test"));
+
+    let description_columns = stdout
+        .lines()
+        .filter_map(|line| {
+            line.find("build project")
+                .or_else(|| line.find("create new post"))
+                .or_else(|| line.find("publish release"))
+                .or_else(|| line.find("run tests"))
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(description_columns, vec![32, 32, 32, 32]);
 }
 
 #[test]
@@ -128,7 +139,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.10\n");
+    assert_eq!(stdout(&output), "mate 0.1.11\n");
 }
 
 #[test]

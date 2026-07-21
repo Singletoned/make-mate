@@ -32,10 +32,10 @@ test: ## run tests
 
 `mate --list` and shell completion display these descriptions.
 
-When a target declares arguments, `mate --list` shows them next to the target name:
+When a target declares arguments, `mate --list` shows them next to the target name and aligns descriptions in a readable column:
 
 ```text
-release <version> [target=all]    publish a release
+release <version> [target=all]  publish a release
 ```
 
 ## Arguments

@@ -34,10 +34,10 @@ mate --makefile-syntax
 mate --llm
 ```
 
-`mate --list` shows declared arguments next to targets:
+`mate --list` shows declared arguments next to targets and aligns descriptions:
 
 ```text
-release <version> [target=all]    publish a release
+release <version> [target=all]  publish a release
 ```
 
 `mate release 1.2.3` invokes plain make as:
