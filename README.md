@@ -28,6 +28,7 @@ mate --version
 mate --list
 mate test
 mate release 1.2.3
+mate new "Post title"
 mate --shell-completion zsh
 mate --makefile-syntax
 mate --llm

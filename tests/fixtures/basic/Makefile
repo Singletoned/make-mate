@@ -1,7 +1,11 @@
-.PHONY: build release test
+.PHONY: build new release test
 
 build: ## build project
 	@printf 'build\n'
+
+# args: title
+new: ## create new post
+	@printf 'TITLE=%s\n' "$(TITLE)"
 
 # args: version target?=all
 release: ## publish release

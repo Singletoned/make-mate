@@ -262,6 +262,18 @@ mate invokes plain make with variables:
 
     make release VERSION=1.2.3 TARGET=all
 
+Quote positional arguments that contain spaces:
+
+    # args: title
+    new: ## create a new post
+    	./scripts/new-post.sh "$(TITLE)"
+
+    mate new "Post title"
+
+mate passes the quoted value as one make variable:
+
+    make new TITLE="Post title"
+
 Argument syntax:
 
     name            required positional argument
@@ -299,6 +311,12 @@ mate is an easier make wrapper. Generate Makefiles that still work with plain ma
     release: ## publish a release
     	./scripts/release.sh $(VERSION) $(TARGET)
 
+    # args: title
+    new: ## create a new post
+    	./scripts/new-post.sh "$(TITLE)"
+
+    # Run as: mate new "Post title"
+
 ## Use mate efficiently
 
 - Use `mate --list` to discover available tasks with descriptions.
@@ -306,6 +324,7 @@ mate is an easier make wrapper. Generate Makefiles that still work with plain ma
 - Use `mate --makefile-syntax` when you need the supported metadata syntax.
 - Use `mate --version` when verifying an installed development build.
 - Invoke tasks as `mate target arg1 arg2`; mate converts positional args into make variables.
+- Quote positional args with spaces, for example `mate new "Post title"` or `mate idea "Rough thought"`.
 
 ## Compatibility principle
 

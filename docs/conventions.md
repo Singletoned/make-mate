@@ -56,6 +56,38 @@ make release VERSION=1.2.3 TARGET=all
 
 The plain `make` form remains valid and should be documented enough for users who do not have `mate` installed.
 
+### Quoted arguments with spaces
+
+Quote positional arguments that contain spaces so the shell passes each value as one argument:
+
+```make
+.PHONY: new idea
+
+# args: title
+new: ## create a new post
+	./scripts/new-post.sh "$(TITLE)"
+
+# args: thought
+idea: ## capture a rough thought
+	./scripts/capture-idea.sh "$(THOUGHT)"
+```
+
+Then run:
+
+```sh
+mate new "Post title"
+mate idea "Rough thought"
+```
+
+`mate` passes those values through as ordinary make variables:
+
+```sh
+make new TITLE="Post title"
+make idea THOUGHT="Rough thought"
+```
+
+Quote the make variable inside the recipe too, as in `"$(TITLE)"`, so scripts receive the value as one argument.
+
 ## Argument syntax
 
 - `name` declares a required positional argument.

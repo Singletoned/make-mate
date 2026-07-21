@@ -34,6 +34,7 @@ fn completes_targets_from_fixture_makefile() {
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let stdout = stdout(&output);
     assert!(stdout.contains("build\tbuild project"));
+    assert!(stdout.contains("new\tcreate new post"));
     assert!(stdout.contains("release\tpublish release"));
     assert!(stdout.contains("test\trun tests"));
     assert!(!stdout.contains("Cargo.toml"));
@@ -95,6 +96,7 @@ fn prints_makefile_syntax_guidance() {
     assert!(stdout.contains("# mate Makefile syntax"));
     assert!(stdout.contains("# args: version target?=all"));
     assert!(stdout.contains("make release VERSION=1.2.3 TARGET=all"));
+    assert!(stdout.contains("mate new \"Post title\""));
 }
 
 #[test]
@@ -105,6 +107,7 @@ fn prints_llm_guidance() {
     let stdout = stdout(&output);
     assert!(stdout.contains("# mate guidance for coding agents and LLMs"));
     assert!(stdout.contains("Use `mate --list`"));
+    assert!(stdout.contains("mate idea \"Rough thought\""));
     assert!(stdout.contains("plain make"));
 }
 
@@ -113,7 +116,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.8\n");
+    assert_eq!(stdout(&output), "mate 0.1.9\n");
 }
 
 #[test]
@@ -122,6 +125,14 @@ fn maps_positional_arguments_to_make_variables() {
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     assert_eq!(stdout(&output), "VERSION=1.2.3 TARGET=all\n");
+}
+
+#[test]
+fn preserves_quoted_positional_arguments_with_spaces() {
+    let output = mate(&["-f", BASIC_FIXTURE, "new", "Post title"]);
+
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert_eq!(stdout(&output), "TITLE=Post title\n");
 }
 
 #[test]
