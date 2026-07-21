@@ -161,7 +161,7 @@ impl Options {
                 "-h" | "--help" => options.help = true,
                 "-V" | "--version" => options.version = true,
                 "--makefile-syntax" => options.makefile_syntax = true,
-                "--llm-guidance" => options.llm_guidance = true,
+                "--llm" => options.llm_guidance = true,
                 "-l" | "--list" => options.list = true,
                 "-f" | "--makefile" => {
                     index += 1;
@@ -217,7 +217,7 @@ impl Options {
 
 fn print_help() {
     println!(
-        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n        --makefile-syntax           Explain Makefile metadata conventions\n        --llm-guidance              Print guidance for coding agents and LLMs\n    -h, --help                      Show this help\n    -V, --version                   Show the installed mate version\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
+        "mate - easier make\n\nUSAGE:\n    mate [OPTIONS] [TARGET] [ARGS...]\n\nOPTIONS:\n    -f, --makefile PATH             Use a specific Makefile\n    -l, --list                      List known targets\n        --complete -- ...           Print completion candidates\n        --shell-completion SHELL    Print static completion glue for bash, zsh, or fish\n        --makefile-syntax           Explain Makefile metadata conventions\n        --llm                       Print guidance for coding agents and LLMs\n    -h, --help                      Show this help\n    -V, --version                   Show the installed mate version\n\nARGUMENTS:\n    TARGET                          Make target to run\n    ARGS                            Positional task arguments declared with '# args:'"
     );
 }
 
@@ -678,10 +678,7 @@ fn cli_option_completions(words: &[String]) -> Option<Vec<String>> {
             ("--list", "list known targets"),
             ("--makefile", "use a specific Makefile"),
             ("--makefile-syntax", "explain Makefile metadata conventions"),
-            (
-                "--llm-guidance",
-                "print guidance for coding agents and LLMs",
-            ),
+            ("--llm", "print guidance for coding agents and LLMs"),
             ("--shell-completion", "print shell completion glue"),
             ("--version", "show installed version"),
         ];

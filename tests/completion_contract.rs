@@ -81,7 +81,7 @@ fn completes_cli_options_without_a_makefile() {
     assert!(stdout.contains("--list\tlist known targets"));
     assert!(stdout.contains("--makefile\tuse a specific Makefile"));
     assert!(stdout.contains("--makefile-syntax\texplain Makefile metadata conventions"));
-    assert!(stdout.contains("--llm-guidance\tprint guidance for coding agents and LLMs"));
+    assert!(stdout.contains("--llm\tprint guidance for coding agents and LLMs"));
     assert!(stdout.contains("--shell-completion\tprint shell completion glue"));
     assert!(stdout.contains("--version\tshow installed version"));
 }
@@ -99,7 +99,7 @@ fn prints_makefile_syntax_guidance() {
 
 #[test]
 fn prints_llm_guidance() {
-    let output = mate(&["--llm-guidance"]);
+    let output = mate(&["--llm"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
     let stdout = stdout(&output);
@@ -113,7 +113,7 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.7\n");
+    assert_eq!(stdout(&output), "mate 0.1.8\n");
 }
 
 #[test]

@@ -30,7 +30,7 @@ mate test
 mate release 1.2.3
 mate --shell-completion zsh
 mate --makefile-syntax
-mate --llm-guidance
+mate --llm
 ```
 
 `mate release 1.2.3` invokes plain make as:
@@ -111,6 +111,6 @@ Or run commands directly:
 cargo test
 cargo run -- --help
 cargo run -- --makefile-syntax
-cargo run -- --llm-guidance
+cargo run -- --llm
 maturin build
 ```
