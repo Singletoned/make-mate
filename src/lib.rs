@@ -422,6 +422,10 @@ pub fn parse_metadata(content: &str) -> BTreeMap<String, Target> {
     let mut pending_arguments = Vec::new();
 
     for line in content.lines() {
+        if line.starts_with('\t') {
+            continue;
+        }
+
         let trimmed = line.trim();
         if trimmed.is_empty() {
             continue;
@@ -822,6 +826,18 @@ mod tests {
             Some("all")
         );
         assert_eq!(metadata["test"].description.as_deref(), Some("run tests"));
+    }
+
+    #[test]
+    fn ignores_recipe_lines_when_parsing_metadata() {
+        let metadata = parse_metadata(
+            "publish: ## publish podcast\n\taws s3 sync cleaned_episodes/ \"s3://bucket/prefix/\" \\\n\t\t--cache-control \"private, max-age=300\"\n\t@echo \"Podcast feed: https://example.com/podcast/feed.xml\"\n",
+        );
+
+        assert!(metadata.contains_key("publish"));
+        assert!(!metadata.contains_key("aws"));
+        assert!(!metadata.contains_key("s3"));
+        assert!(!metadata.contains_key("Podcast"));
     }
 
     #[test]
