@@ -831,13 +831,13 @@ mod tests {
     #[test]
     fn ignores_recipe_lines_when_parsing_metadata() {
         let metadata = parse_metadata(
-            "publish: ## publish podcast\n\taws s3 sync cleaned_episodes/ \"s3://bucket/prefix/\" \\\n\t\t--cache-control \"private, max-age=300\"\n\t@echo \"Podcast feed: https://example.com/podcast/feed.xml\"\n",
+            "publish: ## publish generated files\n\ttool sync output/ \"scheme://bucket/path/\" \\\n\t\t--header \"name: value\"\n\t@echo \"Generated URL: https://example.invalid/output/index.html\"\n",
         );
 
         assert!(metadata.contains_key("publish"));
-        assert!(!metadata.contains_key("aws"));
-        assert!(!metadata.contains_key("s3"));
-        assert!(!metadata.contains_key("Podcast"));
+        assert!(!metadata.contains_key("tool"));
+        assert!(!metadata.contains_key("scheme"));
+        assert!(!metadata.contains_key("Generated"));
     }
 
     #[test]
