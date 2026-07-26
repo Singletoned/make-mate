@@ -1,4 +1,4 @@
-COMPLETION_SHELL ?= zsh
+DEFAULT_SHELL ?= zsh
 
 .PHONY: help test test-contract test-shells check fmt taidy build package install-dev version list syntax llm smoke smoke-completion smoke-args completion clean
 
@@ -54,9 +54,9 @@ smoke-completion: ## smoke-test completion output from fixtures
 smoke-args: ## smoke-test positional argument mapping through make
 	cargo run --quiet --bin mate -- -f tests/fixtures/basic/Makefile release 1.2.3
 
-# args: completion_shell?=zsh
-completion: ## print shell completion glue; pass COMPLETION_SHELL=bash|zsh|fish
-	cargo run --quiet --bin mate -- --shell-completion $(COMPLETION_SHELL)
+# args: shell?=zsh
+completion: ## print shell completion glue; pass SHELL=bash|zsh|fish
+	cargo run --quiet --bin mate -- --shell-completion $(if $(filter /bin/sh,$(SHELL)),$(DEFAULT_SHELL),$(SHELL))
 
 clean: ## remove build artifacts
 	cargo clean

@@ -109,6 +109,7 @@ make test-shells
 make smoke
 make install-dev
 make completion
+make completion SHELL=fish
 make package
 ```
 

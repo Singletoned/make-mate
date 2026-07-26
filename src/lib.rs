@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::io;
@@ -9,6 +10,10 @@ const MAKEFILES: &[&str] = &["GNUmakefile", "makefile", "Makefile"];
 const ARG_DIRECTIVE: &str = "args:";
 const DESCRIPTION_MARKER: &str = "##";
 const LIST_DESCRIPTION_GAP: usize = 2;
+const LIST_DEFAULT_WIDTH: usize = 100;
+const LIST_MIN_WIDTH: usize = 40;
+const LIST_MIN_DESCRIPTION_WIDTH: usize = 20;
+const LIST_STACKED_DESCRIPTION_INDENT: usize = 2;
 
 #[derive(Debug)]
 pub enum MateError {
@@ -643,6 +648,19 @@ fn print_targets(targets: &BTreeMap<String, Target>) {
 }
 
 fn list_target_lines(targets: &BTreeMap<String, Target>) -> Vec<String> {
+    list_target_lines_for_width(targets, terminal_width())
+}
+
+fn terminal_width() -> usize {
+    env::var("COLUMNS")
+        .ok()
+        .and_then(|columns| columns.parse::<usize>().ok())
+        .filter(|columns| *columns >= LIST_MIN_WIDTH)
+        .unwrap_or(LIST_DEFAULT_WIDTH)
+}
+
+fn list_target_lines_for_width(targets: &BTreeMap<String, Target>, width: usize) -> Vec<String> {
+    let width = width.max(LIST_MIN_WIDTH);
     let rows = targets
         .values()
         .map(|target| {
@@ -658,16 +676,56 @@ fn list_target_lines(targets: &BTreeMap<String, Target>) -> Vec<String> {
         .map(|(command, _)| command.len())
         .max()
         .unwrap_or_default();
+    let inline_description_start = command_width + LIST_DESCRIPTION_GAP;
+    let use_inline_descriptions = inline_description_start + LIST_MIN_DESCRIPTION_WIDTH <= width;
 
     rows.into_iter()
         .map(|(command, description)| match description {
-            Some(description) => format!(
-                "{command:<width$}{description}",
-                width = command_width + LIST_DESCRIPTION_GAP
-            ),
+            Some(description) if use_inline_descriptions => {
+                let prefix = format!(
+                    "{command:<description_start$}",
+                    description_start = inline_description_start
+                );
+                wrap_text(&prefix, inline_description_start, description, width)
+            }
+            Some(description) => {
+                let description = wrap_text(
+                    &" ".repeat(LIST_STACKED_DESCRIPTION_INDENT),
+                    LIST_STACKED_DESCRIPTION_INDENT,
+                    description,
+                    width,
+                );
+                format!("{command}\n{description}")
+            }
             None => command,
         })
         .collect()
+}
+
+fn wrap_text(prefix: &str, continuation_indent: usize, text: &str, width: usize) -> String {
+    let mut lines = Vec::new();
+    let mut line = prefix.to_string();
+    let mut current_width = prefix.len();
+    let continuation = " ".repeat(continuation_indent);
+
+    for word in text.split_whitespace() {
+        let separator_width = usize::from(current_width > prefix.len());
+        if current_width + separator_width + word.len() > width && current_width > prefix.len() {
+            lines.push(line);
+            line = continuation.clone();
+            current_width = continuation_indent;
+        }
+
+        if current_width > line.len() || current_width > prefix.len() {
+            line.push(' ');
+            current_width += 1;
+        }
+        line.push_str(word);
+        current_width += word.len();
+    }
+
+    lines.push(line);
+    lines.join("\n")
 }
 
 fn target_command_signature(target: &Target) -> String {
@@ -893,6 +951,39 @@ mod tests {
 
         assert!(targets.contains("build"));
         assert!(targets.contains("release"));
+    }
+
+    #[test]
+    fn wraps_list_descriptions_on_narrow_screens() {
+        let mut targets = BTreeMap::new();
+        targets.insert(
+            "publish".to_string(),
+            Target {
+                name: "publish".to_string(),
+                description: Some("run a task with enough words to wrap cleanly".to_string()),
+                arguments: vec![
+                    Argument {
+                        name: "file-name".to_string(),
+                        required: true,
+                        default: None,
+                    },
+                    Argument {
+                        name: "destination-name".to_string(),
+                        required: true,
+                        default: None,
+                    },
+                ],
+            },
+        );
+
+        let lines = list_target_lines_for_width(&targets, 24);
+
+        assert_eq!(
+            lines,
+            vec![
+                "publish <file-name> <destination-name>\n  run a task with enough words to wrap\n  cleanly"
+            ]
+        );
     }
 
     #[test]
