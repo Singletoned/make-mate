@@ -656,7 +656,28 @@ fn terminal_width() -> usize {
         .ok()
         .and_then(|columns| columns.parse::<usize>().ok())
         .filter(|columns| *columns >= LIST_MIN_WIDTH)
+        .or_else(terminal_width_from_stty)
         .unwrap_or(LIST_DEFAULT_WIDTH)
+}
+
+fn terminal_width_from_stty() -> Option<usize> {
+    let output = Command::new("stty")
+        .arg("size")
+        .stderr(Stdio::null())
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    parse_stty_columns(&String::from_utf8_lossy(&output.stdout))
+}
+
+fn parse_stty_columns(output: &str) -> Option<usize> {
+    output
+        .split_whitespace()
+        .nth(1)
+        .and_then(|columns| columns.parse::<usize>().ok())
+        .filter(|columns| *columns >= LIST_MIN_WIDTH)
 }
 
 fn list_target_lines_for_width(targets: &BTreeMap<String, Target>, width: usize) -> Vec<String> {
@@ -951,6 +972,12 @@ mod tests {
 
         assert!(targets.contains("build"));
         assert!(targets.contains("release"));
+    }
+
+    #[test]
+    fn parses_terminal_width_from_stty_output() {
+        assert_eq!(parse_stty_columns("24 80\n"), Some(80));
+        assert_eq!(parse_stty_columns("not a size"), None);
     }
 
     #[test]
