@@ -114,11 +114,11 @@ pub fn run(args: Vec<String>) -> Result<i32, MateError> {
         return Ok(0);
     }
 
-    if let Some(words) = &options.complete_words {
-        if let Some(completions) = cli_option_completions(words) {
-            print_lines(&completions);
-            return Ok(0);
-        }
+    if let Some(words) = &options.complete_words
+        && let Some(completions) = cli_option_completions(words)
+    {
+        print_lines(&completions);
+        return Ok(0);
     }
 
     let makefile = options.makefile.map_or_else(find_makefile, Ok)?;
@@ -340,18 +340,16 @@ If a feature would require breaking make compatibility, do not use it."#
 }
 
 fn print_shell_completion(shell: &str) -> Result<(), MateError> {
-    match shell {
-        "bash" => println!(
-            "{}",
+    let script = match shell {
+        "bash" => {
             r#"_mate()
 {
     local IFS=$'\n'
     COMPREPLY=( $(mate --complete -- "${COMP_WORDS[@]:1}" | cut -f1) )
 }
 complete -F _mate mate"#
-        ),
-        "zsh" => println!(
-            "{}",
+        }
+        "zsh" => {
             r#"#compdef mate
 _mate() {
     local -a lines candidates
@@ -366,20 +364,20 @@ _mate() {
     _describe -t mate-completions 'mate completions' candidates
 }
 compdef _mate mate"#
-        ),
-        "fish" => println!(
-            "{}",
+        }
+        "fish" => {
             r#"function __mate_complete
     mate --complete -- (commandline -opc)[2..-1]
 end
 complete -c mate -f -a '(__mate_complete)'"#
-        ),
+        }
         _ => {
             return Err(MateError::InvalidInvocation(format!(
                 "unsupported shell '{shell}'; expected bash, zsh, or fish"
             )));
         }
-    }
+    };
+    println!("{script}");
     Ok(())
 }
 
@@ -1019,9 +1017,11 @@ mod tests {
 
         assert!(completions.iter().any(|item| item.starts_with("--list")));
         assert!(completions.iter().any(|item| item.starts_with("--help")));
-        assert!(completions
-            .iter()
-            .any(|item| item.starts_with("--shell-completion")));
+        assert!(
+            completions
+                .iter()
+                .any(|item| item.starts_with("--shell-completion"))
+        );
     }
 
     #[test]

@@ -138,9 +138,11 @@ fn zsh_stub_inserts_option_without_description() {
     let (stdout, stderr) = output_text(&output);
 
     assert!(output.status.success(), "stderr: {stderr}");
-    assert!(stdout
-        .lines()
-        .any(|line| line == "--list:list known targets"));
+    assert!(
+        stdout
+            .lines()
+            .any(|line| line == "--list:list known targets")
+    );
     assert!(
         !stdout.contains('\t'),
         "zsh candidates must use colon descriptions, not tabs: {stdout:?}"
