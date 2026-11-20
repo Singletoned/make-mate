@@ -2,6 +2,11 @@
 name = "make-mate"
 version = "0.1.15"
 edition = "2024"
+rust-version = "1.88"
+description = "An easier make wrapper for task-style Makefiles"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/Singletoned/make-mate"
 
 [[bin]]
 name = "mate"
