@@ -25,7 +25,7 @@ mate --<TAB>
 mate release <TAB>
 ```
 
-For a persistent setup, place the generated file somewhere already on your zsh `fpath`, or source it from your shell startup file.
+For a persistent setup, save the generated file somewhere permanent and source it from `~/.zshrc` after `compinit`.
 
 ## bash
 
@@ -36,6 +36,8 @@ mate --shell-completion bash > /tmp/mate.bash
 source /tmp/mate.bash
 ```
 
+For a persistent setup, save the file somewhere permanent and source it from `~/.bashrc`.
+
 ## fish
 
 For local testing:
@@ -44,6 +46,8 @@ For local testing:
 mate --shell-completion fish > /tmp/mate.fish
 source /tmp/mate.fish
 ```
+
+For a persistent setup, save it as `~/.config/fish/completions/mate.fish`.
 
 ## Debugging completion
 

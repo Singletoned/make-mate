@@ -1,124 +1,75 @@
 # make-mate
 
-`make-mate` provides the `mate` command: a thin wrapper around `make` for task-style Makefiles.
+`mate` adds task discovery, tab completion, and positional arguments to the Makefile you already have. It's a thin wrapper around GNU Make: your teammates can keep using plain `make` without installing anything new.
 
-It is aimed at Makefiles that are mostly `.PHONY` entries and keeps the Makefile useful under plain `make`.
+## Install
 
-## Current conventions
+`make-mate` is in alpha and isn't on PyPI yet. With [uv](https://docs.astral.sh/uv/) and a Rust toolchain (1.88 or newer), install from a checkout:
 
-See [`docs/conventions.md`](docs/conventions.md) for the full Makefile convention and [`docs/completion.md`](docs/completion.md) for shell setup.
+```sh
+git clone https://github.com/Singletoned/make-mate.git
+cd make-mate
+uv tool install .
+mate --version
+```
 
-Describe targets with the common `##` convention:
+If you already use Cargo, run `cargo install --path . --locked` from the checkout instead. Make sure GNU Make is available as `make` on your `PATH`. The initial wheel targets are Linux x86-64 and macOS on Apple Silicon; Windows isn't tested.
+
+## Try it
+
+In a scratch directory, save this as `Makefile` (use a tab before the recipe):
 
 ```make
-.PHONY: test release
+.PHONY: greet
 
-test: ## run tests
-	cargo test
-
-# args: version target?=all
-release: ## publish a release
-	./scripts/release.sh $(VERSION) $(TARGET)
+# args: name greeting?=Hello
+greet: ## greet someone
+	@printf '%s, %s!\n' "$(GREETING)" "$(NAME)"
 ```
 
-Then run:
+Discover tasks and their arguments:
+
+```console
+$ mate --list
+greet <name> [greeting=Hello]  greet someone
+```
+
+Run the task either way:
 
 ```sh
-mate --version
-mate --list
-mate test
-mate release 1.2.3
-mate new "Post title"
-mate --shell-completion zsh
-mate --makefile-syntax
-mate --llm
+mate greet 'Ada Lovelace'
+make greet NAME='Ada Lovelace' GREETING=Hello
 ```
 
-`mate --list` shows declared arguments next to targets and aligns descriptions:
+Both print `Hello, Ada Lovelace!`. You can list and complete tasks in existing Makefiles without adding metadata. Use `##` for descriptions and `# args:` for positional arguments. See the [Makefile conventions](docs/conventions.md), or run `mate --makefile-syntax` for a quick reference and `mate --llm` for coding-agent guidance.
 
-```text
-release <version> [target=all]  publish a release
-```
+Only use `mate` with Makefiles you trust: listing and completion ask GNU Make to read the file, which can evaluate expressions such as `$(shell ...)`.
 
-`mate release 1.2.3` invokes plain make as:
+## Shell completion
 
-```sh
-make release VERSION=1.2.3 TARGET=all
-```
-
-The equivalent plain-`make` command remains valid.
-
-## Installation
-
-### Current checkout for local testing
-
-From this repository, install the latest local Rust binary with:
-
-```sh
-cargo install --path . --locked --force
-```
-
-Confirm the installed command is the version you expect:
-
-```sh
-which mate
-mate --version
-mate --list
-```
-
-You can also install through the intended Python packaging path from this checkout:
-
-```sh
-uv tool install --force .
-mate --version
-```
-
-Uninstall that tool-managed copy with:
-
-```sh
-uv tool uninstall make-mate
-```
-
-### Shell completion
-
-Generate completion glue from the installed command and source it in your shell. For example, in zsh:
+In zsh, with `compinit` already initialized:
 
 ```sh
 mate --shell-completion zsh > /tmp/mate.zsh
 source /tmp/mate.zsh
 ```
 
-See [`docs/completion.md`](docs/completion.md) for bash, fish, and more debugging commands.
-
-### Future PyPI install
-
-The project is intended to be distributed as a native Rust binary in Python wheels so users can eventually install it with:
-
-```sh
-uv tool install make-mate
-```
+Type `mate ` and press Tab in your example directory. See [shell setup](docs/completion.md) for Bash, fish, and persistent installation.
 
 ## Development
 
-Useful recipes:
+Install Bash, zsh, and fish to run the shell integration tests. Useful commands:
 
 ```sh
-make help
+make check
 make test
-make test-shells
 make smoke
-make install-dev
-make completion
-make completion SHELL=fish
-make package
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
 ```
 
-Or run commands directly:
+See [releasing](docs/releasing.md) for the wheel build and release process.
 
-```sh
-cargo test
-cargo run -- --help
-cargo run -- --makefile-syntax
-cargo run -- --llm
-maturin build
-```
+## License
+
+[MIT](LICENSE).
