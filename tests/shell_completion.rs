@@ -189,6 +189,31 @@ fn zsh_stub_does_not_reinsert_exact_option() {
     );
 }
 
+#[test]
+fn fish_stub_completes_options_targets_and_arguments() {
+    let output = Command::new("fish")
+        .args([
+            "--no-config",
+            "-c",
+            r#"mate --shell-completion fish | source
+complete --do-complete 'mate --li'
+complete --do-complete 'mate rel'
+complete --do-complete 'mate release '
+"#,
+        ])
+        .current_dir(BASIC_FIXTURE_DIR)
+        .env("PATH", shell_path())
+        .output()
+        .expect("fish should be installed for completion smoke tests");
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(
+        stdout,
+        "--list\tlist known targets\nrelease\tpublish release\n<version>\n"
+    );
+}
+
 fn zsh_harness(stub: &Path, words_assignment: &str) -> String {
     format!(
         r#"compdef() {{ :; }}

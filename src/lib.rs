@@ -367,7 +367,9 @@ compdef _mate mate"#
         }
         "fish" => {
             r#"function __mate_complete
-    mate --complete -- (commandline -opc)[2..-1]
+    set -l words (commandline -opc)
+    set -l token (commandline -ct)
+    mate --complete -- $words[2..-1] "$token"
 end
 complete -c mate -f -a '(__mate_complete)'"#
         }
