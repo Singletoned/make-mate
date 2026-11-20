@@ -1,6 +1,6 @@
 DEFAULT_SHELL ?= zsh
 
-.PHONY: help test test-contract test-shells check fmt taidy build package install-dev version list syntax llm smoke smoke-completion smoke-args completion clean
+.PHONY: help test test-contract test-shells check fmt taidy build package install-dev version list syntax llm smoke smoke-completion smoke-args completion release clean
 
 help: ## list available recipes
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "%-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -57,6 +57,10 @@ smoke-args: ## smoke-test positional argument mapping through make
 # args: shell?=zsh
 completion: ## print shell completion glue; pass SHELL=bash|zsh|fish
 	cargo run --quiet --bin mate -- --shell-completion $(if $(filter /bin/sh,$(SHELL)),$(DEFAULT_SHELL),$(SHELL))
+
+# args: version
+release: ## check, tag, and publish the specified version
+	sh scripts/release.sh "$${VERSION:-}"
 
 clean: ## remove build artifacts
 	cargo clean

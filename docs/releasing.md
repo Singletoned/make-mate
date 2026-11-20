@@ -7,30 +7,30 @@
 1. In GitHub, create an Actions environment named `pypi`. Restrict deployments to release tags (`v*`) and require a reviewer if available.
 2. In [PyPI's publishing settings](https://pypi.org/manage/account/publishing/), add a pending [Trusted Publisher](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/) for the first release:
 
-   | Field | Value |
-   | --- | --- |
-   | PyPI project name | `make-mate` |
-   | Owner | `Singletoned` |
-   | Repository | `make-mate` |
-   | Workflow filename | `ci.yml` |
-   | Environment name | `pypi` |
+   | Field             | Value         |
+   | ----------------- | ------------- |
+   | PyPI project name | `make-mate`   |
+   | Owner             | `Singletoned` |
+   | Repository        | `make-mate`   |
+   | Workflow filename | `release.yml` |
+   | Environment name  | `pypi`        |
 
-   No PyPI API token is needed. If the project already exists under your account, add the publisher to the project instead.
+   No PyPI API token is needed. If you already configured a publisher for `ci.yml`, replace it with one for `release.yml`. If the project already exists under your account, configure the publisher on the project instead.
 
 ## Cut a release
 
-1. Ensure the versions in `Cargo.toml` and `pyproject.toml` match. If bumping the version, run `cargo check` to refresh `Cargo.lock` and commit all three files.
-2. Push the release commit to `main` and wait for CI to pass on both platforms.
-3. Create an annotated tag on that commit. Write the release notes in the tag message; those become the GitHub release notes. For example, for the first alpha:
+Install Python 3.11+ and [the GitHub CLI](https://cli.github.com/), and authenticate with `gh auth login`. Ensure `release.yml` is already on `origin/main` before the first release.
 
-   ```sh
-   git tag -a v0.1.15
-   git push origin v0.1.15
-   ```
+From `main`, run:
 
-   Suggested notes: “First public alpha: list Makefile tasks, complete them in Bash, zsh, and fish, and pass positional arguments without giving up plain `make`. Wheels are available for Linux x86-64 and Apple Silicon macOS.”
+```sh
+mate release 0.1.15
+# Or, without mate:
+make release VERSION=0.1.15
+```
 
-4. The tag run rebuilds and tests both wheels, publishes them to PyPI, and then creates a GitHub release with the same wheels attached.
-5. Verify `uv tool install make-mate` in a clean environment on the supported platforms. After the first release, make that the headline install command in `README.md` before announcing.
+The command prepares the requested version from committed `main` in a temporary worktree. It updates `Cargo.toml`, `Cargo.lock`, and `pyproject.toml` if needed; it doesn't make a version commit when the requested version is already set. After local checks pass, write the release notes in the tag editor. The command pushes `main` and the annotated tag atomically, then waits for the matching GitHub Actions run.
 
-If publishing succeeds but the GitHub release step fails, rerun only the failed job. Don't move a published tag or try to replace a published wheel; cut a new version if you need to change the artifacts.
+[`release.yml`](../.github/workflows/release.yml) rebuilds and tests both wheels, publishes them to PyPI, and creates a GitHub release with the same wheels and tag notes. If publishing succeeds but the GitHub release step fails, rerun only the failed job. Don't move a published tag or try to replace a published wheel; cut a new version if you need to change the artifacts.
+
+Verify `uv tool install make-mate` in a clean environment on the supported platforms. After the first release, make that the headline install command in `README.md` before announcing.
