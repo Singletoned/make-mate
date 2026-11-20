@@ -139,7 +139,10 @@ fn prints_the_installed_version() {
     let output = mate(&["--version"]);
 
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    assert_eq!(stdout(&output), "mate 0.1.15\n");
+    assert_eq!(
+        stdout(&output),
+        concat!("mate ", env!("CARGO_PKG_VERSION"), "\n")
+    );
 }
 
 #[test]
